@@ -1199,7 +1199,50 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         Mostly a useful shortcut/hook.
         """
+        VALUES = [
+            # fields in the db
+            'id',
+            'uuid',
+            'title',
+            'abstract',
+            'csw_wkt_geometry',
+            'csw_type',
+            'distribution_description',
+            'distribution_url',
+            'owner_id',
+            'share_count',
+            'srid',
+            'category',
+            'supplemental_information',
+     
+            # Do not add much value to the list page.
+            #'constraints_other',
+            #'data_quality_statement', 'date_type',
+            #'edition', 'featured', 'language',
+            #'maintenance_frequency', 'purpose',
+            #'temporal_extent_end', 'temporal_extent_start',
+            #'csw_mdsource', 'csw_schema','csw_typename',
+     
+            # Date fields (very very slow)
+            #'date', 'csw_insert_date',
+     
+            # Decimal fields (very very slow and available as WKT already)
+            #'bbox_x0', 'bbox_x1', 'bbox_y0', 'bbox_y1',
+     
+            # properties calculated at runtime
+            #'get_absolute_url', 'thumbnail_url', 
+     
+            # properties that need to hit other models:
+            #'keywords',  'owner', 
+        ]
+        from django.core.serializers.json import DjangoJSONEncoder
+        resource_values = data['objects'].values(*VALUES)
+        resource_list = list(resource_values)
+        #resource_json = json.dumps(resource_list, cls=DjangoJSONEncoder)
+        #serialized = serializers.serialize("json", data['objects'])
+        #import ipdb; ipdb.set_trace()
         desired_format = self.determine_format(request)
+        data['objects'] = resource_list
         serialized = self.serialize(request, data, desired_format)
         return response_class(content=serialized, content_type=build_content_type(desired_format), **response_kwargs)
 
@@ -1292,13 +1335,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         to_be_serialized = paginator.page()
 
         # Dehydrate the bundles in preparation for serialization.
-        bundles = []
+        #bundles = []
+        # for obj in to_be_serialized[self._meta.collection_name]:
+        #     bundle = self.build_bundle(obj=obj, request=request)
+        #     bundles.append(self.full_dehydrate(bundle, for_list=True))
 
-        for obj in to_be_serialized[self._meta.collection_name]:
-            bundle = self.build_bundle(obj=obj, request=request)
-            bundles.append(self.full_dehydrate(bundle, for_list=True))
-
-        to_be_serialized[self._meta.collection_name] = bundles
+        #to_be_serialized[self._meta.collection_name] = bundles
         to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
         return self.create_response(request, to_be_serialized)
 
